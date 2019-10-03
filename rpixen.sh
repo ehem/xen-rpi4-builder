@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/sh -eux
 
 # SPDX-License-Identifier: MIT
 
@@ -18,11 +18,11 @@ BUILD_ARCH=${1:-arm64}
 
 sudo apt install device-tree-compiler tftpd-hpa flex bison qemu-utils kpartx git curl qemu-user-static binfmt-support parted bc libncurses5-dev libssl-dev pkg-config python acpica-tools
 
-source ${SCRIPTDIR}toolchain-aarch64-linux-gnu.sh
-source ${SCRIPTDIR}toolchain-arm-linux-gnueabihf.sh
+. ${SCRIPTDIR}toolchain-aarch64-linux-gnu.sh
+. ${SCRIPTDIR}toolchain-arm-linux-gnueabihf.sh
 
 DTBFILE=bcm2711-rpi-4-b.dtb
-if [ "${BUILD_ARCH}" == "arm64" ]; then
+if [ "${BUILD_ARCH}" = "arm64" ]; then
     DTBXENO=pi4-64-xen
 else
     DTBXENO=pi4-32-xen
@@ -64,7 +64,7 @@ fi
 
 # Build Linux
 cd ${WRKDIR}linux
-if [ "${BUILD_ARCH}" == "arm64" ]; then
+if [ "${BUILD_ARCH}" = "arm64" ]; then
     if [ ! -s ${WRKDIR}linux/.build-arm64/.config ]; then
         # utilize kernel/configs/xen.config fragment
         make O=.build-arm64 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcm2711_defconfig xen.config
@@ -75,7 +75,7 @@ if [ "${BUILD_ARCH}" == "arm64" ]; then
         echo "Building kernel. This takes a while. To monitor progress, open a new terminal and use \"tail -f buildoutput.log\""
         make O=.build-arm64 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j $(nproc) > ${WRKDIR}buildoutput.log 2> ${WRKDIR}buildoutput2.log
     fi
-elif [ "${BUILD_ARCH}" == "armhf" ]; then
+elif [ "${BUILD_ARCH}" = "armhf" ]; then
     if [ ! -s ${WRKDIR}linux/.build-arm32/.config ]; then
         # utilize kernel/configs/xen.config fragment
         make O=.build-arm32 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- bcm2711_defconfig xen.config
@@ -97,10 +97,10 @@ fi
 cp ${WRKDIR}firmware/boot/fixup4*.dat ${WRKDIR}firmware/boot/start4*.elf bootfiles/
 
 mkdir -p bootfiles/overlays
-if [ "${BUILD_ARCH}" == "arm64" ]; then
+if [ "${BUILD_ARCH}" = "arm64" ]; then
     cp ${WRKDIR}linux/.build-arm64/arch/arm64/boot/dts/broadcom/${DTBFILE} bootfiles/
     cp ${WRKDIR}linux/.build-arm64/arch/arm64/boot/dts/overlays/${DTBXENO}.dtbo bootfiles/overlays
-elif [ "${BUILD_ARCH}" == "armhf" ]; then
+elif [ "${BUILD_ARCH}" = "armhf" ]; then
     cp ${WRKDIR}linux/.build-arm32/arch/arm/boot/dts/${DTBFILE} bootfiles/
     cp ${WRKDIR}linux/.build-arm32/arch/arm/boot/dts/overlays/${DTBXENO}.dtbo bootfiles/overlays
 fi
@@ -141,11 +141,11 @@ dd if=/dev/zero of=bootfiles/kernel8.img bs=1024 count=18432
 # Assuming xen is less than 2MiB in size
 dd if=${WRKDIR}xen/xen/xen of=bootfiles/kernel8.img bs=1024 conv=notrunc
 
-if [ "${BUILD_ARCH}" == "arm64" ]; then
+if [ "${BUILD_ARCH}" = "arm64" ]; then
     # Assuming linux is less than 15.5MiB in size
     # Image is offset by 2.5MiB from the beginning of the file
     dd if=${WRKDIR}linux/.build-arm64/arch/arm64/boot/Image of=bootfiles/kernel8.img bs=1024 seek=2560 conv=notrunc
-elif [ "${BUILD_ARCH}" == "armhf" ]; then
+elif [ "${BUILD_ARCH}" = "armhf" ]; then
     # Assuming linux is less than 16MiB in size
     # Image is offset by 2MiB from the beginning of the file
     dd if=${WRKDIR}linux/.build-arm32/arch/arm/boot/zImage of=bootfiles/kernel8.img bs=1024 seek=2048 conv=notrunc
@@ -233,9 +233,9 @@ mountstuff
 sudo cp -r bootfiles/* ${MNTBOOT}
 
 cd ${WRKDIR}linux
-if [ "${BUILD_ARCH}" == "arm64" ]; then
+if [ "${BUILD_ARCH}" = "arm64" ]; then
     sudo --preserve-env PATH=${PATH} make O=.build-arm64 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=${MNTROOTFS} modules_install > ${WRKDIR}modules_install.log
-elif [ "${BUILD_ARCH}" == "armhf" ]; then
+elif [ "${BUILD_ARCH}" = "armhf" ]; then
     sudo --preserve-env PATH=${PATH} make O=.build-arm32 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=${MNTROOTFS} modules_install > ${WRKDIR}modules_install.log
 fi
 cd ${WRKDIR}
@@ -243,10 +243,10 @@ cd ${WRKDIR}
 
 # Build Xen tools
 
-if [ "${BUILD_ARCH}" == "arm64" ]; then
+if [ "${BUILD_ARCH}" = "arm64" ]; then
     CROSS_PREFIX=aarch64-linux-gnu
     XEN_ARCH=arm64
-elif [ "${BUILD_ARCH}" == "armhf" ]; then
+elif [ "${BUILD_ARCH}" = "armhf" ]; then
     CROSS_PREFIX=arm-linux-gnueabihf
     XEN_ARCH=arm32
 fi
@@ -259,8 +259,8 @@ cd ${WRKDIR}xen
 # TODO: --with-xenstored=oxenstored
 
 # Ask the native compiler what system include directories it searches through.
-SYSINCDIRS=$(echo $(sudo chroot ${MNTROOTFS} bash -c "echo | gcc -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem${MNTROOTFS}|"))
-SYSINCDIRSCXX=$(echo $(sudo chroot ${MNTROOTFS} bash -c "echo | g++ -x c++ -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem${MNTROOTFS}|"))
+SYSINCDIRS=$(echo $(sudo chroot ${MNTROOTFS} sh -c "echo | gcc -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem${MNTROOTFS}|"))
+SYSINCDIRSCXX=$(echo $(sudo chroot ${MNTROOTFS} sh -c "echo | g++ -x c++ -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem${MNTROOTFS}|"))
 
 CC="${CROSS_PREFIX}-gcc --sysroot=${MNTROOTFS} -nostdinc ${SYSINCDIRS} -B${MNTROOTFS}lib/${CROSS_PREFIX} -B${MNTROOTFS}usr/lib/${CROSS_PREFIX}"
 CXX="${CROSS_PREFIX}-g++ --sysroot=${MNTROOTFS} -nostdinc ${SYSINCDIRSCXX} -B${MNTROOTFS}lib/${CROSS_PREFIX} -B${MNTROOTFS}usr/lib/${CROSS_PREFIX}"
@@ -315,7 +315,7 @@ cd ${WRKDIR}
 
 # It seems like the xen tools configure script selects a few too many of these backend driver modules, so we override it with a simpler list.
 # /usr/lib/modules-load.d/xen.conf
-sudo bash -c "cat > ${MNTROOTFS}usr/lib/modules-load.d/xen.conf" <<EOF
+sudo sh -c "cat > ${MNTROOTFS}usr/lib/modules-load.d/xen.conf" <<EOF
 xen-evtchn
 xen-gntdev
 xen-gntalloc
@@ -324,10 +324,10 @@ xen-netback
 EOF
 
 # /etc/hostname
-sudo bash -c "echo ${HOSTNAME} > ${MNTROOTFS}etc/hostname"
+sudo sh -c "echo \"$(uname -n)\" > \"${MNTROOTFS}\"etc/hostname"
 
 # /etc/hosts
-sudo bash -c "cat > ${MNTROOTFS}etc/hosts" <<EOF
+sudo sh -c "cat > ${MNTROOTFS}etc/hosts" <<EOF
 127.0.0.1	localhost
 127.0.1.1	${HOSTNAME}
 
@@ -340,21 +340,21 @@ ff02::2 ip6-allrouters
 EOF
 
 # /etc/fstab
-sudo bash -c "cat > ${MNTROOTFS}etc/fstab" <<EOF
+sudo sh -c "cat > ${MNTROOTFS}etc/fstab" <<EOF
 proc            /proc           proc    defaults          0       0
 /dev/mmcblk0p1  /boot           vfat    defaults          0       2
 /dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
 EOF
 
 # /etc/network/interfaces.d/eth0
-sudo bash -c "cat > ${MNTROOTFS}etc/network/interfaces.d/eth0" <<EOF
+sudo sh -c "cat > ${MNTROOTFS}etc/network/interfaces.d/eth0" <<EOF
 auto eth0
 iface eth0 inet manual
 EOF
 sudo chmod 0644 ${MNTROOTFS}etc/network/interfaces.d/eth0
 
 # /etc/network/interfaces.d/xenbr0
-sudo bash -c "cat > ${MNTROOTFS}etc/network/interfaces.d/xenbr0" <<EOF
+sudo sh -c "cat > ${MNTROOTFS}etc/network/interfaces.d/xenbr0" <<EOF
 auto xenbr0
 iface xenbr0 inet dhcp
     bridge_ports eth0
@@ -366,12 +366,12 @@ if [ -s ${MNTROOTFS}lib/systemd/system/networking.service ]; then
     sudo sed -i -e "s/TimeoutStartSec=5min/TimeoutStartSec=15sec/" ${MNTROOTFS}lib/systemd/system/networking.service
 fi
 if [ -s ${MNTROOTFS}lib/systemd/system/ifup@.service ]; then
-    sudo bash -c "echo \"TimeoutStopSec=15s\" >> ${MNTROOTFS}lib/systemd/system/ifup@.service"
+    sudo sh -c "echo \"TimeoutStopSec=15s\" >> ${MNTROOTFS}lib/systemd/system/ifup@.service"
 fi
 
 # User account setup
 sudo chroot ${MNTROOTFS} useradd -s /bin/bash -G adm,sudo -l -m -p ${HASHED_PASSWORD} ${USERNAME}
 # Password-less sudo
-sudo chroot ${MNTROOTFS} /bin/bash -euxc "echo \"${USERNAME} ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/90-${USERNAME}-user"
+sudo chroot ${MNTROOTFS} /bin/sh -euxc "echo \"${USERNAME} ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/90-${USERNAME}-user"
 
 df -h | grep -e "Filesystem" -e "/dev/mapper/loop"

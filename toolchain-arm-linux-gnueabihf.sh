@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/sh -eux
 
 # SPDX-License-Identifier: MIT
 
@@ -15,7 +15,7 @@
 # https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-a/downloads
 
 ARM32_TOOLCHAIN_WRKDIR=$(pwd)/
-ARM32_TOOLCHAIN_SCRIPTDIR=$(cd $(dirname ${BASH_SOURCE}) && pwd)/
+ARM32_TOOLCHAIN_SCRIPTDIR=$(cd $(dirname $0) && pwd)/
 
 if ! which ccache > /dev/null; then
     sudo apt install ccache

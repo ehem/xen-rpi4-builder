@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/sh -eux
 
 # SPDX-License-Identifier: MIT
 
@@ -68,15 +68,15 @@ sudo tar -C ${MNTROOTFS} -xf ${ROOTFS}
 
 mountstuff
 
-if [ "${ARCH}" == "arm64" ]; then
+if [ "${ARCH}" = "arm64" ]; then
     sudo cp $(which qemu-aarch64-static) ${MNTROOTFS}usr/bin/
-elif [ "${ARCH}" == "armhf" ]; then
+elif [ "${ARCH}" = "armhf" ]; then
     sudo cp `which qemu-arm-static` ${MNTROOTFS}usr/bin/
 fi
 
 # /etc/resolv.conf is required for internet connectivity in chroot. It will get overwritten by dhcp, so don't get too attached to it.
-sudo chroot ${MNTROOTFS} bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
-sudo chroot ${MNTROOTFS} bash -c 'echo "nameserver 2001:4860:4860::8888" >> /etc/resolv.conf'
+sudo chroot ${MNTROOTFS} sh -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+sudo chroot ${MNTROOTFS} sh -c 'echo "nameserver 2001:4860:4860::8888" >> /etc/resolv.conf'
 
 sudo sed -i -e "s/# deb /deb /" ${MNTROOTFS}etc/apt/sources.list
 sudo chroot ${MNTROOTFS} apt-get update
@@ -89,6 +89,6 @@ sudo chroot ${MNTROOTFS} apt-get clean
 sudo cp regenerate_ssh_host_keys.service ${MNTROOTFS}etc/systemd/system
 sudo chroot ${MNTROOTFS} systemctl enable regenerate_ssh_host_keys.service
 
-if [ "${ARCH}" == "amd64" ]; then
+if [ "${ARCH}" = "amd64" ]; then
     sudo chroot ${MNTROOTFS} apt-get -y install bin86 bcc liblzma-dev ocaml python python-dev gettext acpica-tools wget ftp build-essential gcc-multilib
 fi
