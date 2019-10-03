@@ -162,8 +162,8 @@ if [ ! -s ${ROOTFS} ]; then
 fi
 
 
-MNTRAMDISK=/mnt/ramdisk/
-MNTROOTFS=/mnt/rpi-arm64-rootfs/
+MNTRAMDISK="${MNTRAMDISK:-/mnt/ramdisk}/"
+MNTROOTFS="${MNTROOTFS:-/mnt/rpi-arm64-rootfs}/"
 MNTBOOT=${MNTROOTFS}boot/
 IMGFILE=${MNTRAMDISK}rpixen.img
 

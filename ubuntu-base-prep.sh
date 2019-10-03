@@ -17,7 +17,7 @@ if [ ! -s ${ROOTFS} ]; then
     curl -OLf ${ROOTFSURL}${ROOTFS}
 fi
 
-MNTRAMDISK=/mnt/ramdisk/
+MNTRAMDISK="${MNTRAMDISK:-/mnt/ramdisk/}/"
 MNTROOTFS=${MNTRAMDISK}qemu-${ARCH}-rootfs/
 
 IMGFILE=ubuntu-base-18.04.3-base-${ARCH}-prepped.tar.gz
