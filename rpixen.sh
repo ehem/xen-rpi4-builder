@@ -38,13 +38,14 @@ if [ ! -d xen ]; then
     git clone git://xenbits.xen.org/xen.git
     cd xen
     git checkout RELEASE-4.13.0
+    find "${SCRIPTDIR}patches/xen" -name \[0-9\]\[0-9\]\[0-9\]\[0-9\]-\*.patch -a -type f -print0 2>/dev/null | sort -z | xargs -0 -r git am
     cd ${WRKDIR}
 fi
 
 if [ ! -d linux ]; then
     git clone --depth 1 --branch rpi-4.19.y https://github.com/raspberrypi/linux.git linux
     cd linux
-    git am ${SCRIPTDIR}patches/linux/*.patch
+    find "${SCRIPTDIR}patches/linux" -name \[0-9\]\[0-9\]\[0-9\]\[0-9\]-\*.patch -a -type f -print0 2>/dev/null | sort -z | xargs -0 -r git am
     cd ${WRKDIR}
 fi
 
