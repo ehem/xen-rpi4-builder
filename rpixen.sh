@@ -16,7 +16,17 @@ HOSTNAME=ubuntu
 
 BUILD_ARCH=${1:-arm64}
 
-sudo apt install device-tree-compiler tftpd-hpa flex bison qemu-utils kpartx git curl qemu-user-static binfmt-support parted bc libncurses5-dev libssl-dev pkg-config python acpica-tools
+for pkg in device-tree-compiler tftpd-hpa flex bison qemu-utils kpartx git curl qemu-user-static binfmt-support parted bc libncurses5-dev libssl-dev pkg-config python acpica-tools
+do if ! dpkg -s "$pkg" >/dev/null 2>&1
+	then
+		missing="${missing:-}${missing:+ }$pkg"
+	fi
+done
+if [ -n "${missing:-}" ]
+then
+	echo The following packages need to be installed before proceding: $missing 1>&2
+	exit 1
+fi
 
 . ${SCRIPTDIR}toolchain-aarch64-linux-gnu.sh
 . ${SCRIPTDIR}toolchain-arm-linux-gnueabihf.sh
